@@ -364,7 +364,7 @@ require('lualine').setup {
         },
     },
     lualine_x = { {'filetype', left_padding = 1 }, },
-    lualine_y = { {'progress', separator = { left = '' },} },
+    lualine_y = { {'progress', separator = { left = '' },} },
     lualine_z = {
       { 'location', separator = {left = '', right = '' }, },
     },

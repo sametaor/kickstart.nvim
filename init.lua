@@ -620,7 +620,6 @@ require('lazy').setup({
 
       -- Document existing key chains
       require('which-key').add {
-<<<<<<< HEAD
         {
           { '<leader>c', group = '[C]ode' },
           { '<leader>d', group = '[D]ocument' },
@@ -646,16 +645,6 @@ require('lazy').setup({
         width_ratio = 0.7, -- maximum width of the Glow window compared to the nvim window size (overrides `width`)
         height_ratio = 0.7,
       })
-=======
-        { '<leader>c', group = '[C]ode' },
-        { '<leader>d', group = '[D]ocument' },
-        { '<leader>r', group = '[R]ename' },
-        { '<leader>s', group = '[S]earch' },
-        { '<leader>w', group = '[W]orkspace' },
-        { '<leader>t', group = '[T]oggle' },
-        { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
-      }
->>>>>>> 3e55ff1a83dc7a9813d8f2220cefd90b07aacdab
     end,
   },
 

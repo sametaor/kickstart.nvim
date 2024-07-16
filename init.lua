@@ -154,6 +154,10 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
+vim.o.showtabline = 2
+
+vim.opt.sessionoptions = 'curdir,folds,globals,help,tabpages,terminal,winsize'
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -174,7 +178,6 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 -- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
 -- or just use <C-\><C-n> to exit terminal mode
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
-
 -- TIP: Disable arrow keys in normal mode
 vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
 vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
@@ -189,6 +192,30 @@ vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left wind
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+
+local opts = { noremap = true, silent = true }
+-- Normal-mode commands
+vim.keymap.set('n', '<A-Up>'      ,':MoveLine 1<CR>', opts)
+vim.keymap.set('n', '<A-Down>'    ,':MoveLine -1<CR>', opts)
+vim.keymap.set('n', '<A-S-Left>'  ,':MoveWord -1<CR>', opts)
+vim.keymap.set('n', '<A-S-Right>' ,':MoveWord 1<CR>', opts)
+
+-- Visual-mode commands
+vim.keymap.set('x', '<A-Up>'   , ':MoveBlock 1<CR>', opts)
+vim.keymap.set('x', '<A-Down>' , ':MoveBlock -1<CR>', opts)
+vim.keymap.set('v', '<A-Left>' , ':MoveHBlock -1<CR>', opts)
+vim.keymap.set('v', '<A-Right>', ':MoveHBlock 1<CR>', opts)
+
+-- Changing tabby tabs
+vim.api.nvim_set_keymap("n", "<leader>ta", ":$tabnew<CR>", { noremap = true })
+vim.api.nvim_set_keymap("n", "<leader>tc", ":tabclose<CR>", { noremap = true })
+vim.api.nvim_set_keymap("n", "<leader>to", ":tabonly<CR>", { noremap = true })
+vim.api.nvim_set_keymap("n", "<leader>tn", ":tabn<CR>", { noremap = true })
+vim.api.nvim_set_keymap("n", "<leader>tp", ":tabp<CR>", { noremap = true })
+-- move current tab to previous position
+vim.api.nvim_set_keymap("n", "<leader>tmp", ":-tabmove<CR>", { noremap = true })
+-- move current tab to next position
+vim.api.nvim_set_keymap("n", "<leader>tmn", ":+tabmove<CR>", { noremap = true })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -209,7 +236,10 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
 if not vim.loop.fs_stat(lazypath) then
   local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
-  vim.fn.system { 'git', 'clone', '--filter=blob:none', '--branch=stable', lazyrepo, lazypath }
+  local out = vim.fn.system { 'git', 'clone', '--filter=blob:none', '--branch=stable', lazyrepo, lazypath }
+  if vim.v.shell_error ~= 0 then
+    error('Error cloning lazy.nvim:\n' .. out)
+  end
 end ---@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
 
@@ -223,10 +253,321 @@ vim.opt.rtp:prepend(lazypath)
 --  To update plugins you can run
 --    :Lazy update
 --
+
+-- Example for configuring Neovim to load user-installed installed Lua rocks:
+package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/share/lua/5.1/?/init.lua"
+package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/share/lua/5.1/?.lua"
+
 -- NOTE: Here is where you install your plugins.
 require('lazy').setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
+  {
+    'petertriho/nvim-scrollbar',
+    config = function()
+        require("scrollbar").setup({
+          show = true,
+          show_in_active_only = false,
+          set_highlights = true,
+          folds = 1000, -- handle folds, set to number to disable folds if no. of lines in buffer exceeds this
+          max_lines = false, -- disables if no. of lines in buffer exceeds this
+          hide_if_all_visible = false, -- Hides everything if all lines are visible
+          throttle_ms = 100,
+          handle = {
+              text = " ",
+              blend = 30, -- Integer between 0 and 100. 0 for fully opaque and 100 to full transparent. Defaults to 30.
+              color = nil,
+              color_nr = nil, -- cterm
+              highlight = "CursorColumn",
+              hide_if_all_visible = false, -- Hides handle if all lines are visible
+          },
+          marks = {
+              Cursor = {
+                  text = "•",
+                  priority = 0,
+                  gui = nil,
+                  color = nil,
+                  cterm = nil,
+                  color_nr = nil, -- cterm
+                  highlight = "Normal",
+              },
+              Search = {
+                  text = { "-", "=" },
+                  priority = 1,
+                  gui = nil,
+                  color = nil,
+                  cterm = nil,
+                  color_nr = nil, -- cterm
+                  highlight = "Search",
+              },
+              Error = {
+                  text = { "-", "=" },
+                  priority = 2,
+                  gui = nil,
+                  color = nil,
+                  cterm = nil,
+                  color_nr = nil, -- cterm
+                  highlight = "DiagnosticVirtualTextError",
+              },
+              Warn = {
+                  text = { "-", "=" },
+                  priority = 3,
+                  gui = nil,
+                  color = nil,
+                  cterm = nil,
+                  color_nr = nil, -- cterm
+                  highlight = "DiagnosticVirtualTextWarn",
+              },
+              Info = {
+                  text = { "-", "=" },
+                  priority = 4,
+                  gui = nil,
+                  color = nil,
+                  cterm = nil,
+                  color_nr = nil, -- cterm
+                  highlight = "DiagnosticVirtualTextInfo",
+              },
+              Hint = {
+                  text = { "-", "=" },
+                  priority = 5,
+                  gui = nil,
+                  color = nil,
+                  cterm = nil,
+                  color_nr = nil, -- cterm
+                  highlight = "DiagnosticVirtualTextHint",
+              },
+              Misc = {
+                  text = { "-", "=" },
+                  priority = 6,
+                  gui = nil,
+                  color = nil,
+                  cterm = nil,
+                  color_nr = nil, -- cterm
+                  highlight = "Normal",
+              },
+              GitAdd = {
+                  text = "┆",
+                  priority = 7,
+                  gui = nil,
+                  color = nil,
+                  cterm = nil,
+                  color_nr = nil, -- cterm
+                  highlight = "GitSignsAdd",
+              },
+              GitChange = {
+                  text = "┆",
+                  priority = 7,
+                  gui = nil,
+                  color = nil,
+                  cterm = nil,
+                  color_nr = nil, -- cterm
+                  highlight = "GitSignsChange",
+              },
+              GitDelete = {
+                  text = "▁",
+                  priority = 7,
+                  gui = nil,
+                  color = nil,
+                  cterm = nil,
+                  color_nr = nil, -- cterm
+                  highlight = "GitSignsDelete",
+              },
+          },
+          excluded_buftypes = {
+              "terminal",
+          },
+          excluded_filetypes = {
+              "cmp_docs",
+              "cmp_menu",
+              "noice",
+              "prompt",
+              "TelescopePrompt",
+          },
+          autocmd = {
+              render = {
+                  "BufWinEnter",
+                  "TabEnter",
+                  "TermEnter",
+                  "WinEnter",
+                  "CmdwinLeave",
+                  "TextChanged",
+                  "VimResized",
+                  "WinScrolled",
+              },
+              clear = {
+                  "BufWinLeave",
+                  "TabLeave",
+                  "TermLeave",
+                  "WinLeave",
+              },
+          },
+          handlers = {
+              cursor = true,
+              diagnostic = true,
+              gitsigns = false, -- Requires gitsigns
+              handle = true,
+              search = false, -- Requires hlslens
+              ale = false, -- Requires ALE
+          },
+        })
+    end,
+  },
+
+  {
+    "karb94/neoscroll.nvim",
+    config = function()
+      require('neoscroll').setup({
+        hide_cursor = true,
+        stop_eof = true,
+        respect_scrolloff = false,
+        cursor_scrolls_alone = true,
+        easing = 'quartic',
+        pre_hook = nil,
+        post_hook = nil,
+        performance_mode = false,
+      })
+    end,
+  },
+
+  {
+    "TobinPalmer/Tip.nvim",
+    event = "VimEnter",
+    init = function()
+      -- Default config
+      --- @type Tip.config
+      require("tip").setup({
+        seconds = 2,
+        title = "Tip!",
+        url = "https://vtip.43z.one", -- Or https://vimiscool.tech/neotip
+      })
+    end,
+  },
+
+  {
+    'Bekaboo/dropbar.nvim',
+    -- optional, but required for fuzzy finder support
+    dependencies = {
+      'nvim-telescope/telescope-fzf-native.nvim'
+    }
+  },
+  'MunifTanjim/nui.nvim',
+  'rcarriga/nvim-notify',
+  {
+    '3rd/image.nvim',
+    config = function()
+      require("image").setup({
+        backend = "kitty",
+        integrations = {
+          markdown ={
+            enabled = true,
+            clear_in_insert_mode = false,
+            download_remote_images = true,
+            only_render_image_at_cursor = false,
+            filetypes = { "markdown", "vimwiki" },
+          },
+          neorg = {
+            enabled = true,
+            clear_in_insert_mode = false,
+            download_remote_images = true,
+            only_render_image_at_cursor = false,
+            filetypes = { "norg" },
+          },
+          html = {
+            enabled = true
+          },
+          css = {
+            enabled = true
+          },
+        },
+        max_width = nil,
+        max_height = nil,
+        max_width_window_percentage = nil,
+        max_height_window_percentage = 50,
+        window_overlap_clear_enabled = false,
+        window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "" },
+        editor_only_render_when_focused = false,
+        tmux_show_only_in_active_window = false,
+        hijack_file_patterns = { "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.avif" },
+      })
+    end,
+  },
+
+  {
+    "doctorfree/cheatsheet.nvim",
+    event = "VeryLazy",
+    dependencies = {
+      { "nvim-telescope/telescope.nvim" },
+      { "nvim-lua/popup.nvim" },
+      { "nvim-lua/plenary.nvim" },
+    },
+    config = function()
+      local ctactions = require("cheatsheet.telescope.actions")
+      require("cheatsheet").setup({
+        bundled_cheetsheets = {
+          enabled = { "default", "lua", "markdown", "regex", "netrw", "unicode" },
+        disabled = { "nerd-fonts" },
+        },
+        bundled_plugin_cheatsheets = {
+          enabled = {
+            "auto-session",
+            "goto-preview",
+            "octo.nvim",
+            "telescope.nvim",
+            "vim-easy-align",
+            "vim-sandwich",
+          },
+          disabled = { "gitsigns" },
+        },
+        include_only_installed_plugins = true,
+        telescope_mappings = {
+          ["<CR>"] = ctactions.select_or_fill_commandline,
+          ["<A-CR>"] = ctactions.select_or_execute,
+          ["<C-Y>"] = ctactions.copy_cheat_value,
+          ["<C-E>"] = ctactions.edit_user_cheatsheet,
+        },
+      })
+    end,
+  },
+
+  {
+    'hinell/move.nvim',
+  },
+
+  {
+    "folke/noice.nvim",
+    event = "VeryLazy",
+    opts = {
+      -- add any options here
+    },
+    dependencies = {
+      -- if you lazy-load any plugin below, make sure to add proper `module="..."` entries
+      "MunifTanjim/nui.nvim",
+      -- OPTIONAL:
+      --   `nvim-notify` is only needed, if you want to use the notification view.
+      --   If not available, we use `mini` as the fallback
+      "rcarriga/nvim-notify",
+    },
+    config = function()
+      require("noice").setup({
+        lsp = {
+          -- override markdown rendering so that **cmp** and other plugins use **Treesitter**
+          override = {
+            ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
+            ["vim.lsp.util.stylize_markdown"] = true,
+            ["cmp.entry.get_documentation"] = true, -- requires hrsh7th/nvim-cmp
+          },
+        },
+        -- you can enable a preset for easier configuration
+        presets = {
+          bottom_search = false, -- use a classic bottom cmdline for search
+          command_palette = true, -- position the cmdline and popupmenu together
+          long_message_to_split = true, -- long messages will be sent to a split
+          inc_rename = false, -- enables an input dialog for inc-rename.nvim
+          lsp_doc_border = true, -- add a border to hover docs and signature help
+        },
+      })
+    end,
+  },
 
   -- NOTE: Plugins can also be added by using a table,
   -- with the first argument being the link and the following
@@ -291,6 +632,21 @@ require('lazy').setup({
       }
     end,
   },
+  {"ellisonleao/glow.nvim", cmd = "Glow",
+    config = function()
+      require('glow').setup({
+        glow_path = "",
+        install_path = "~/.local/bin", -- default path for installing glow binary
+        border = "shadow", -- floating window border config
+        style = "dark", -- filled automatically with your current editor background, you can override using glow json style
+        pager = true,
+        width = 80,
+        height = 100,
+        width_ratio = 0.7, -- maximum width of the Glow window compared to the nvim window size (overrides `width`)
+        height_ratio = 0.7,
+      })
+    end,
+  },
 
   -- NOTE: Plugins can specify dependencies.
   --
@@ -318,7 +674,11 @@ require('lazy').setup({
           return vim.fn.executable 'make' == 1
         end,
       },
-      { 'nvim-telescope/telescope-ui-select.nvim' },
+      { 'nvim-telescope/telescope-ui-select.nvim',
+        config = function()
+          require("telescope").load_extension("noice")
+        end,
+      },
 
       -- Useful for getting pretty icons, but requires a Nerd Font.
       { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
@@ -778,12 +1138,24 @@ require('lazy').setup({
     --
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
     'folke/tokyonight.nvim',
+      config = function()
+        require('tokyonight').setup({
+          style = "moon",
+          transparent = true,
+          styles ={
+            sidebars = "transparent",
+            floats = "transparent",
+          },
+          dim_inactive = false,
+          lualine_bold = true,
+        })
+      end,
     priority = 1000, -- Make sure to load this before all the other start plugins.
     init = function()
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+      vim.cmd.colorscheme 'tokyonight-moon'
 
       -- You can configure highlights by doing something like:
       vim.cmd.hi 'Comment gui=none'
@@ -792,6 +1164,14 @@ require('lazy').setup({
 
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
+  {
+    'nanozuki/tabby.nvim',
+    -- event = 'VimEnter', -- if you want lazy load, see below
+    dependencies = 'nvim-tree/nvim-web-devicons',
+    config = function()
+      require 'kickstart.plugins.sammy'
+    end,
+  },
 
   { 'nvim-lualine/lualine.nvim',
     dependencies = { 'nvim-tree/nvim-web-devicons' },
@@ -835,7 +1215,7 @@ require('lazy').setup({
 
       require('mini.git').setup()
 
-      require('mini.tabline').setup()
+      --require('mini.tabline').setup()
 
       require('mini.starter').setup()
 

@@ -267,47 +267,47 @@ local samline = {
   normal = {
     a = {bg = colors.white, fg = colors.blue, gui = 'bold'},
     b = {bg = colors.blue, fg = colors.white},
-    c = {bg = colors.darkblack, fg = colors.lightwhite},
-    x = {fg = colors.lightwhite},
+    c = {fg = colors.lightwhite},
+    x = {bg = '', fg = colors.lightwhite},
     y = {bg = colors.green, fg = colors.lightwhite},
     z = {bg = colors.cyan, fg = colors.lightwhite}
   },
   insert = {
     a = {bg = colors.paleyellow, fg = colors.blue, gui = 'bold'},
     b = {bg = colors.blue, fg = colors.white},
-    c = {bg = colors.darkblack, fg = colors.lightwhite},
-    x = {fg = colors.lightwhite},
+    c = {fg = colors.lightwhite},
+    x = {bg = '', fg = colors.lightwhite},
     y = {bg = colors.green, fg = colors.lightwhite},
     z = {bg = colors.cyan, fg = colors.lightwhite}
   },
   visual = {
     a = {bg = colors.yellow, fg = colors.white, gui = 'bold'},
     b = {bg = colors.blue, fg = colors.white},
-    c = {bg = colors.darkblack, fg = colors.lightwhite},
-    x = {fg = colors.lightwhite},
+    c = {fg = colors.lightwhite},
+    x = {bg = '', fg = colors.lightwhite},
     y = {bg = colors.green, fg = colors.lightwhite},
     z = {bg = colors.cyan, fg = colors.lightwhite}
   },
   replace = {
     a = {bg = colors.white, fg = colors.red, gui = 'bold'},
     b = {bg = colors.blue, fg = colors.white},
-    c = {bg = colors.darkblack, fg = colors.lightwhite},
-    x = {fg = colors.lightwhite},
+    c = {fg = colors.lightwhite},
+    x = {bg = '', fg = colors.lightwhite},
     y = {bg = colors.green, fg = colors.lightwhite},
     z = {bg = colors.cyan, fg = colors.lightwhite}
   },
   command = {
     a = {bg = colors.darkgreen, fg = colors.white, gui = 'bold'},
     b = {bg = colors.blue, fg = colors.white},
-    c = {bg = colors.darkblack, fg = colors.lightwhite},
-    x = {fg = colors.lightwhite},
+    c = {fg = colors.lightwhite},
+    x = {bg = '', fg = colors.lightwhite},
     y = {bg = colors.green, fg = colors.lightwhite},
     z = {bg = colors.cyan, fg = colors.lightwhite}
   },
   inactive = {
     a = {bg = colors.darkgray, fg = colors.gray, gui = 'bold'},
     b = {bg = colors.darkgray, fg = colors.gray},
-    c = {bg = colors.darkgray, fg = colors.gray},
+    c = {fg = colors.gray},
   }
 }
 
@@ -320,10 +320,10 @@ require('lualine').setup {
   },
   sections = {
     lualine_a = { { 'mode', fmt = function(s) return mode_map[s] or s end, separator = { left = '', right = '' }, left_padding = 1} },
-    lualine_b = { { 'filename', separator = { right = '  ' }, }, },
+    lualine_b = { { icon = ' ', 'filename', file_status = true, newfile_status = true, path = 4, symbols = { modified = ' ', readonly = ' ', unnamed = ' ', newfile = '󱇬 ', }, separator = { right = '  ' }, }, },
     lualine_c = {
         {
-            icon = ' (  󰮠  )',
+            icon = ' ',
             'branch',
             color = function(section)
                     local gs = git_status()
@@ -363,10 +363,28 @@ require('lualine').setup {
             padding = { left = 0, right = 1 }
         },
     },
-    lualine_x = { {'filetype', left_padding = 1 }, },
-    lualine_y = { {'progress', separator = { left = '' },} },
+    lualine_x = { {'filetype', left_padding = 1 },
+                  {
+                    require("noice").api.status.message.get_hl,
+                    cond = require("noice").api.status.message.has,
+                  },
+                  {
+                    require("noice").api.status.command.get,
+                    cond = require("noice").api.status.command.has,
+                  },
+                  {
+                    require("noice").api.status.mode.get,
+                    cond = require("noice").api.status.mode.has,
+                  },
+                  {
+                    require("noice").api.status.search.get,
+                    cond = require("noice").api.status.search.has,
+                  },
+
+                },
+    lualine_y = { { icon = ' ','datetime', style = "%H:%M", separator = { left = '' },} },
     lualine_z = {
-      { 'location', separator = {left = '', right = '' }, },
+      { icon = ' ', 'location', separator = {left = '', right = '' }, },
     },
   },
   inactive_sections = {

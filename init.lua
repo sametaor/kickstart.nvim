@@ -404,7 +404,7 @@ require('lazy').setup({
           handlers = {
               cursor = true,
               diagnostic = true,
-              gitsigns = false, -- Requires gitsigns
+              gitsigns = true, -- Requires gitsigns
               handle = true,
               search = false, -- Requires hlslens
               ale = false, -- Requires ALE
@@ -421,10 +421,88 @@ require('lazy').setup({
         stop_eof = true,
         respect_scrolloff = false,
         cursor_scrolls_alone = true,
-        easing = 'quartic',
+        easing = 'cubic',
         pre_hook = nil,
         post_hook = nil,
         performance_mode = false,
+      })
+    end,
+  },
+
+  {
+    "Mr-LLLLL/utilities.nvim",
+    event = "VeryLazy",
+    opts = {
+        -- always use `q` to quit preview windows 
+        -- NOTE: remapping `q` to `qq`. in case `q` always press by mistake
+        quit_with_q = true,
+        -- in qf window, use <cr> jump to
+        jump_quickfix_item = true,
+        -- define some useful keymap for generic. details see init_keymap function
+        map_with_useful = true,
+        -- when hit <ctrl-t> will pop stack and centerize
+        -- if want to centerize for jump definition, implementation, references, you can used like:
+        vim.keymap.set(
+             'n',
+             '<c-]>',
+             function()
+                 require("utilities.nvim").
+                     list_or_jump("textDocument/definition", require("telescope.builtin").lsp_definitions)
+             end,
+             {}),
+        -- but this is need telescope when result is greater one
+        ctrl_t_with_center = true,
+
+        -- NOTE: require nvim-treesitter-textobjects
+        -- smart move behavior only support languages {Lua, Golang, Rust, Http}
+        -- others language will moved like nvim-treesitter-textobjects
+        smart_move_textobj = {
+            disabled = false,
+            -- disabled filetype, default support all language just like nvim-treesitter-textobjects behavior
+            disabled_filetypes = { "git" },
+            -- if you want to only support some filetypes, uncomment it and fill your language
+            -- enabled_filetypes = {},
+            mapping = {
+                prev_func_start = "[[",
+                next_func_start = "]]",
+                prev_func_end = "[]",
+                next_func_end = "][",
+
+                prev_class_start = "[m",
+                next_class_start = "]m",
+                prev_class_end = "[M",
+                next_class_end = "]M",
+            },
+        },
+    },
+  },
+
+  {
+    "jiaoshijie/undotree",
+    dependencies = "nvim-lua/plenary.nvim",
+    config = true,
+    keys = {
+      { "<leader>u", "<cmd>lua require('undotree').toggle()<cr>" },
+    },
+    config = function()
+      require('undotree').setup({
+        float_diff = true,
+        layout = "left_bottom",
+        position = "right",
+        ignore_filetype = { 'undotree', 'undotreeDiff', 'qf', 'TelescopePrompt', 'spectre_panel', 'tsplayground' },
+        window = {
+          winblend = 30,
+        },
+        keymaps = {
+          ['j'] = "move_next",
+          ['k'] = "move_prev",
+          ['gj'] = "move2parent",
+          ['J'] = "move_change_next",
+          ['K'] = "move_change_prev",
+          ['<CR>'] = "action_enter",
+          ['p'] = "enter_diffbuf",
+          ['q'] = "quit",
+        },
       })
     end,
   },
@@ -585,16 +663,7 @@ require('lazy').setup({
   --
   -- See `:help gitsigns` to understand what the configuration keys do
   { -- Adds git related signs to the gutter, as well as utilities for managing changes
-    'lewis6991/gitsigns.nvim',
-    opts = {
-      signs = {
-        add = { text = '+' },
-        change = { text = '~' },
-        delete = { text = '_' },
-        topdelete = { text = '‾' },
-        changedelete = { text = '~' },
-      },
-    },
+    'lewis6991/gitsigns.nvim'
   },
 
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
@@ -1173,6 +1242,23 @@ require('lazy').setup({
     end,
   },
 
+  {
+    'LukasPietzschmann/telescope-tabs',
+    config = function()
+      require('telescope').load_extension 'telescope-tabs'
+      require("telescope-tabs").setup {
+        entry_formatter = function(tab_id, buffer_ids, file_names, file_paths, is_current)
+            local tab_name = require("tabby.feature.tab_name").get(tab_id)
+            return string.format("%d: %s%s", tab_id, tab_name, is_current and " <" or "")
+        end,
+        entry_ordinal = function(tab_id, buffer_ids, file_names, file_paths, is_current)
+            return require("tabby.feature.tab_name").get(tab_id)
+        end,
+      }
+    end,
+    dependencies = { 'nvim-telescope/telescope.nvim' },
+  },
+
   { 'nvim-lualine/lualine.nvim',
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     config = function()
@@ -1214,8 +1300,6 @@ require('lazy').setup({
       --end
 
       require('mini.git').setup()
-
-      --require('mini.tabline').setup()
 
       require('mini.starter').setup()
 
